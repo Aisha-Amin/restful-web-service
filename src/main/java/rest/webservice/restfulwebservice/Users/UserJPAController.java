@@ -21,6 +21,9 @@ public class UserJPAController {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    PostRepository postRepository;
+
     @GetMapping("/jpa/users")
     public List<User> getAllUsers(){
         return userRepository.findAll();
@@ -54,5 +57,48 @@ public class UserJPAController {
     @DeleteMapping("/jpa/users/{id}")
     public void deleteUserById(@PathVariable int id){
         userRepository.deleteById(id);
+    }
+
+    @GetMapping("/jpa/users/{id}/post")
+    public List<Post> getAllPostsForUsers(@PathVariable int id){
+        Optional<User> user = userRepository.findById(id);
+        if(!user.isPresent())
+            throw new UserNotFoundException("id:" + id);
+
+      return user.get().getPosts();
+    }
+
+    @PostMapping("/jpa/users/{id}/post")
+    public ResponseEntity<User> createPost(@PathVariable int id, @Valid @RequestBody Post post){
+        Optional<User> user = userRepository.findById(id);
+        if(!user.isPresent())
+            throw new UserNotFoundException("id:" + id);
+
+        post.setUser(user.get());
+        postRepository.save(post);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(post.getId())
+                .toUri();
+        return ResponseEntity.created(location).build();
+    }
+
+    @GetMapping("/jpa/users/{id}/post/{postId}")
+    public EntityModel<Post> getPostById(@PathVariable int id, @PathVariable int postId ){
+        Optional<User> user = userRepository.findById(id);
+        if(!user.isPresent())
+            throw new UserNotFoundException("id:" + id);
+
+        Optional<Post> post = postRepository.findById(postId);
+        if(!post.isPresent())
+            throw new PostNotFoundException("id:" + id);
+
+        EntityModel<Post> resource = EntityModel.of(post.get());
+
+        WebMvcLinkBuilder linkTo =
+                linkTo(methodOn(this.getClass()).getAllPostsForUsers(id));
+
+        resource.add(linkTo.withRel("all-post"));
+        return resource;
     }
 }
