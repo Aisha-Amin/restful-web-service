@@ -1,10 +1,7 @@
 package rest.webservice.restfulwebservice.Users;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -29,7 +26,7 @@ public class User {
     @Past(message = "Birth Date should be in past")
     private Date birthDate;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user",fetch = FetchType.EAGER)
     @JsonIgnore
     private List<Post> posts;
 
